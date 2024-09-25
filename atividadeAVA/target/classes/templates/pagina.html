@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Tarefas</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Barra de Navegação -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Gerenciador de Tarefas</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Tarefas</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Conteúdo Principal -->
+<div class="container mt-4">
+    <h2>Tarefas</h2>
+    <!-- Tabela de Tarefas -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Título</th>
+                <th>Descrição</th>
+                <th>Prazo</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tarefas-tbody">
+            <!-- As tarefas serão carregadas aqui via AJAX -->
+        </tbody>
+    </table>
+
+    <!-- Formulário para criar uma nova tarefa -->
+    <h2>Nova Tarefa</h2>
+    <form id="tarefaForm">
+        <div class="mb-3">
+            <label for="titulo" class="form-label">Título</label>
+            <input type="text" class="form-control" id="titulo" name="titulo" required>
+        </div>
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição</label>
+            <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="prazo" class="form-label">Prazo</label>
+            <input type="date" class="form-control" id="prazo" name="prazo" required>
+        </div>
+        <div class="mb-3">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status" required>
+                <option value="Pendente">Pendente</option>
+                <option value="Concluída">Concluída</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success">Criar Tarefa</button>
+    </form>
+</div>
+
+<!-- Script para AJAX -->
+<script>
+    // Carrega as tarefas quando a página é carregada
+    window.onload = function() {
+        carregarTarefas();
+    };
+
+    // Função para carregar as tarefas
+    function carregarTarefas() {
+        fetch('/tarefas')  // Chama o endpoint de listar tarefas
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('tarefas-tbody');
+                tbody.innerHTML = '';  // Limpa as tarefas existentes na tabela
+                data.forEach(tarefa => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${tarefa.id}</td>
+                        <td>${tarefa.titulo}</td>
+                        <td>${tarefa.descricao}</td>
+                        <td>${tarefa.prazo}</td>
+                        <td>${tarefa.status}</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deletarTarefa(${tarefa.id})">Excluir</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+    }
+
+    // Função para criar uma nova tarefa
+    document.getElementById('tarefaForm').addEventListener('submit', function(event) {
+        event.preventDefault();  // Impede o formulário de ser enviado normalmente
+
+        const titulo = document.getElementById('titulo').value;
+        const descricao = document.getElementById('descricao').value;
+        const prazo = document.getElementById('prazo').value;
+        const status = document.getElementById('status').value;
+
+        const tarefa = {
+            titulo: titulo,
+            descricao: descricao,
+            prazo: prazo,
+            status: status
+        };
+
+        fetch('/tarefas', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(tarefa),
+        })
+        .then(response => response.json())
+        .then(data => {
+            carregarTarefas();  // Recarrega as tarefas após a criação
+            document.getElementById('tarefaForm').reset();  // Limpa o formulário
+        });
+    });
+
+    // Função para deletar uma tarefa
+    function deletarTarefa(id) {
+        fetch(`/tarefas/${id}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            carregarTarefas();  // Recarrega as tarefas após a exclusão
+        });
+    }
+</script>
+
+<!-- Script JS do Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
